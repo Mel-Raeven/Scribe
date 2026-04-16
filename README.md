@@ -16,7 +16,7 @@ A fast, keyboard-driven terminal note-taking app with a markdown preview, file t
 Build from source:
 
 ```sh
-git clone https://github.com/melm/scribe
+git clone https://github.com/Mel-Raeven/Scribe
 cd scribe
 make install
 ```
