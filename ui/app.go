@@ -155,7 +155,7 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Async file load completed (from Init startFile)
 	case FileLoadedMsg:
-		a.applyFileLoad(msg.Path, msg.Content)
+		cmds = append(cmds, a.applyFileLoad(msg.Path, msg.Content)...)
 
 	case SavedMsg:
 		a.editor.OnSaved()
@@ -287,7 +287,7 @@ func (a *App) handleEditKey(msg tea.KeyMsg) tea.Cmd {
 		if msg.String() == "ctrl+p" && a.openFile != "" {
 			a.mode = ModePreview
 		} else {
-			a.showSidebar()
+			return tea.Batch(a.showSidebar()...)
 		}
 		return nil
 	default:
@@ -347,7 +347,7 @@ func navKeyMsg(k string) (tea.KeyMsg, bool) {
 func (a *App) handlePreviewKey(msg tea.KeyMsg) tea.Cmd {
 	switch msg.String() {
 	case "esc":
-		a.showSidebar()
+		return tea.Batch(a.showSidebar()...)
 	case "e":
 		a.enterEditMode()
 		return a.editor.Focus()
@@ -456,7 +456,7 @@ func (a *App) openFileCmd(path string) tea.Cmd {
 
 // applyFileLoad wires the loaded content into the editor and preview.
 // The file is read exactly once; both components receive the same string.
-func (a *App) applyFileLoad(path, content string) {
+func (a *App) applyFileLoad(path, content string) []tea.Cmd {
 	a.openFile = path
 	// Feed content directly — no second ReadFile
 	a.editor.LoadContent(path, content)
@@ -466,15 +466,16 @@ func (a *App) applyFileLoad(path, content string) {
 	a.sidebarHidden = true
 	a.startFile = "" // clear one-time start file
 	// Recalc sizes so preview gets full width immediately.
-	_ = a.recalcSizes()
+	// Return the cmds so the renderer build cmd is not dropped.
+	return a.recalcSizes()
 }
 
 // showSidebar reveals the sidebar and returns to normal mode.
-func (a *App) showSidebar() {
+func (a *App) showSidebar() []tea.Cmd {
 	a.sidebarHidden = false
 	a.mode = ModeNormal
 	a.sidebar.setFocused(true)
-	_ = a.recalcSizes()
+	return a.recalcSizes()
 }
 
 func (a *App) enterEditMode() {
